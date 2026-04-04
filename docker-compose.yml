@@ -1,0 +1,60 @@
+# Those 2 services are needed to run jenkins with docker in docker (dind) 
+# and to be able to use docker commands inside jenkins container
+
+
+
+
+
+services:
+
+  #SET THE PROXY
+  run-socat:
+    # alpine light linux image
+    # socat is a tool that allows to create a proxy between two endpoints
+    image: alpine/socat:latest
+    container_name: docker-proxy-container
+    restart: always
+
+    # forks every new request 
+    # put all from network to docker socket
+    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+
+    ports:
+      - "127.0.0.1:2375:2375"
+    
+    # let him use my local docker socket
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - jenkins
+
+
+  run-jenkins:     
+    build: .
+    image: myjenkins-blueocean:latest
+    container_name: jenkins-blueocean-container
+    restart: on-failure
+    
+    # because we need running socat container 
+    depends_on:
+      - run-socat
+
+    networks:
+      - jenkins
+    
+    environment:
+      - DOCKER_HOST=tcp://run-socat:2375
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+
+# makes dir in docker system dir
+volumes:
+  jenkins-data:
+
+networks:
+  jenkins:
+    name: jenkins
+    driver: bridge
