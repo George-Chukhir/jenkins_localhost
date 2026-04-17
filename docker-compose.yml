@@ -7,26 +7,26 @@
 
 services:
 
-  #SET THE PROXY
-  run-socat:
-    # alpine light linux image
-    # socat is a tool that allows to create a proxy between two endpoints
-    image: alpine/socat:latest
-    container_name: docker-proxy-container
-    restart: always
+  # #SET THE PROXY
+  # run-socat:
+  #   # alpine light linux image
+  #   # socat is a tool that allows to create a proxy between two endpoints
+  #   image: alpine/socat:latest
+  #   container_name: docker-proxy-container
+  #   restart: always
 
-    # forks every new request 
-    # put all from network to docker socket
-    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+  #   # forks every new request 
+  #   # put all from network to docker socket
+  #   command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
 
-    ports:
-      - "127.0.0.1:2375:2375"
+  #   ports:
+  #     - "127.0.0.1:2375:2375"
     
-    # let him use my local docker socket
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - jenkins
+  #   # let him use my local docker socket
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   networks:
+  #     - jenkins
 
 
   run-jenkins:     
@@ -34,10 +34,11 @@ services:
     image: myjenkins-blueocean:latest
     container_name: jenkins-blueocean-container
     restart: on-failure
-    
+    user: root 
+
     # because we need running socat container 
-    depends_on:
-      - run-socat
+    # depends_on:
+    #   - run-socat
 
     networks:
       - jenkins
@@ -49,6 +50,7 @@ services:
       - "50000:50000"
     volumes:
       - jenkins-data:/var/jenkins_home
+      - jenkins-docker-socket:/var/run/docker.sock
 
 # makes dir in docker system dir
 volumes:
