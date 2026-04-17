@@ -4,7 +4,9 @@ USER root
 
 RUN apt-get update && apt-get install -y \
         docker.io \
-        curl 
+        curl \ 
+        ansible \ 
+        sshpass
         #install docker insdide jenkins container
 
 RUN mkdir -p /usr/libexec/docker/cli-plugins/ \
